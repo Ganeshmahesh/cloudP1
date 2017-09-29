@@ -6,14 +6,16 @@
 #include <stdint.h>
 
 #define ITERATIONS 1000000000
-#define EXEC_TIME 20
+#define EXEC_TIME 100
 #define BILLION 1000000000L
 #define INSTR 9
 
+long c[8];
 void calculate_IOPS (int no_threads);
 void calculate_FLOPS (int no_threads);
-void run_tensec_exp (void (*method)(void *));
+void run_tensec_exp (void (*method)(void *), int no_threads);
 void exec_threads (void *,int);
+void *tensecexp_exec(void *param);
 void *
 compute_integer_op (void *param)
 {
@@ -37,10 +39,30 @@ compute_integer_op (void *param)
   //pthread_exit (NULL);
 }
 
+struct tensec_args_struct
+{
+  void (*method)(void *);
+  int index;
+};
+
+void *
+tensecexp_exec (void *param)
+{
+  struct tensec_args_struct *arg=(struct tensec_args_struct * ) param;
+  while(1)
+  {
+  (* (arg-> method)) (1);
+   c[arg->index] += INSTR;
+   //debugging
+   printf("argIndex=%d\n",arg->index);
+   printf("c[arg->index] %ld\n",c[arg->index]);
+  }
+}
+
 void *
 compute_float_op (void *param)
 {
-  volatile long double i = 0;
+  volatile long double i = 0.0;
   volatile long double k = 2.5;
   volatile double a1=1.0;
   volatile double a2=3.0;
@@ -125,43 +147,49 @@ void calculate_FLOPS (int no_threads)
 
 }
 
-void run_tensec_exp(void (*method)(void *))
+
+void *
+time_tracker(void *k)
 {
-  time_t start, end;
-  time_t elapsed;
-  start = time(NULL);
-  int terminate = 1;
-  time_t total_elapsed = start + EXEC_TIME;
-  printf("%d start\n",ctime(&start));
-  while (start < total_elapsed)
+  struct timespec start;
+  clock_gettime(CLOCK_REALTIME,&start);
+  long total_elapsed = start.tv_sec + EXEC_TIME;
+  int i=0;
+  while ((start.tv_sec < total_elapsed )&& i < 600)
   {
-    end = time (NULL);
-    elapsed = difftime (end,start);
-    printf("elapsed time %s",ctime(&start));
-    printf("\n%d\n",elapsed);
-    if (elapsed >= 1)
-    {
-      printf("\nSecond passed\n");
-      //store clock data
-      //printf("second passed\n");
-      //total_elapsed += elapsed;
-      elapsed = 0.0;
-    }
-    start = time (NULL);
-   // else
-   // {
-      //total_elapsed += elapsed;
-      //printf("elapsed %s\n",total_elapsed);
-   // }
-   // if(total_elapsed >= EXEC_TIME)
-   // {
-    //  terminate = 0;
-   // }
-   // else
-   // {
-      (*method)(NULL);//calling compute method
-   // }
+    sleep(1);
+    printf("total instructions %ld\n",(c[0]+c[1]+c[2]+c[3]+c[4]+c[5]+c[6]+c[7])/ITERATIONS);
+    clock_gettime (CLOCK_REALTIME,&start);
+    i++;
   }
+  
+}
+
+
+void run_tensec_exp(void (*method)(void *),int no_threads)
+{
+ // struct timespec start, end;
+ // clock_gettime(CLOCK_REALTIME,&start);
+ // long total_elapsed = start.tv_sec + EXEC_TIME;
+  pthread_t threads[no_threads];
+  pthread_t counter_thread;
+  struct tensec_args_struct tensec_args[no_threads];
+  int i=0;
+  for(i=0;i<no_threads;i++)
+  {
+     tensec_args[i].method = method;
+     tensec_args[i].index = i;
+     pthread_create (&threads[i], NULL, tensecexp_exec, (void *)&(tensec_args[i]));
+  }
+
+  pthread_create (&counter_thread,NULL,time_tracker,(void *)i);
+  i=0;
+  pthread_join(counter_thread,NULL);
+ for(i=0;i<no_threads;i++)
+  {
+    pthread_kill(&threads[i],1);
+  }
+  printf("600 samples taken from 10 min exp");
 }
 
 void calculate_IOPS (int no_threads)
@@ -204,7 +232,7 @@ int main (int argc, char *argv[])
     }
 		else
 		{
-			run_tensec_exp (compute_integer_op);//integer 10 sec exp
+			run_tensec_exp (compute_integer_op,8);//integer 10 sec exp
 		}
 	}
 	else
@@ -215,7 +243,7 @@ int main (int argc, char *argv[])
     }
     else
     {
-      run_tensec_exp (compute_float_op);//float 10 sec exp
+      run_tensec_exp (compute_float_op,8);//float 10 sec exp
     }
   }
   return 0;	
