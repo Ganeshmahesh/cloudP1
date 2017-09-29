@@ -158,7 +158,7 @@ time_tracker(void *k)
   while ((start.tv_sec < total_elapsed )&& i < 600)
   {
     sleep(1);
-    printf("total instructions %ld\n",(c[0]+c[1]+c[2]+c[3]+c[4]+c[5]+c[6]+c[7])/ITERATIONS);
+    printf("total instructions %ld\n",(c[0]+c[1]+c[2]+c[3]+c[4]+c[5]+c[6]+c[7]);
     clock_gettime (CLOCK_REALTIME,&start);
     i++;
   }
