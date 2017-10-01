@@ -8,7 +8,7 @@
 //#define ITERATIONS 1000000000
 #define EXEC_TIME 100
 #define BILLION 1000000000L
-#define INSTR 9
+#define INSTR 24
 
 long ITERATIONS;
 FILE *fp=NULL;
@@ -33,9 +33,26 @@ compute_integer_op (void *param)
   volatile unsigned int a7=9;
   volatile unsigned int a8=3;
 
+  volatile unsigned int a9=3;
+  volatile unsigned int a10=3;
+  volatile unsigned int a11=3;
+  volatile unsigned int a12=3;
+  volatile unsigned int a13=3;
+  volatile unsigned int a14=3;
+  volatile unsigned int a15=3;
+  volatile unsigned int a16=3;
+  volatile unsigned int a17=3;
+  volatile unsigned int a18=3;
+  volatile unsigned int a19=3;
+  volatile unsigned int a20=3;
+  volatile unsigned int a21=3;
+  volatile unsigned int a22=3;
+  volatile unsigned int a23=3;
+
   while (i < ITERATIONS)
   {
-    k = k + a1+a2+a3+a4+a5+a6+a7+a8;
+    k = k + a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12+a13+a14+a15+a16+a17
+          +a18+a19+a20+a21+a22+a23;
     i++;
   }
   //printf ("completed thread:%d\n", (intptr_t) param);
@@ -75,12 +92,29 @@ compute_float_op (void *param)
   volatile double a6=8.0;
   volatile double a7=9.0;
   volatile double a8=3.0;
-
+  volatile double a9=9.0;
+  volatile double a10=10.0;
+  volatile double a11=11.0;
+  volatile double a12=12.0;
+  volatile double a13=13.0;
+  volatile double a14=14.0;
+  volatile double a15=15.0;
+  volatile double a16=16.0;
+  volatile double a17=17.0;
+  volatile double a18=18.0;
+  volatile double a19=19.0;
+  volatile double a20=20.0;
+  volatile double a21=21.0;
+  volatile double a22=22.0;
+  volatile double a23=23.0;
+                        
   while (i < ITERATIONS)
   {
-    k = k + a1+a2+a3+a4+a5+a6+a7+a8;
-    i++; 
+    k = k + a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12+a13+a14+a15+a16+a17
+      +a18+a19+a20+a21+a22+a23;
+    i++;
   }
+
   //printf ("completed thread:%d\n", (intptr_t) param);
   //pthread_exit (NULL);
 }
