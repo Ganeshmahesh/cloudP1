@@ -1,0 +1,7 @@
+Sample Intel(R) LINPACK data file (lininput_xeon64)
+Intel(R) LINPACK data
+1                     # number of tests
+20000 # problem sizes
+20000 # leading dimensions
+2 # times to run a test
+4 # alignment values (in KBytes)
