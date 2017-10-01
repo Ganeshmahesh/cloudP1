@@ -4,6 +4,7 @@
 #include <string.h>
 #include <immintrin.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define ITERATIONS 1000000000
 #define EXEC_TIME 100
@@ -15,6 +16,7 @@
 int *thread_op_array; //array holding total operations completed by each thread
 char *target_mem_ptr;
 char *source_mem_ptr;
+bool isThroughPut_op = false;
 
 struct thread_data_t
 {
@@ -77,8 +79,9 @@ read_write_op(void * param)
  // fp_end_addr = thread_data[thread_id].thread_fp + end_address;
   //inital seek of the src file pointer
   lseek(src_fp, start_address, SEEK_SET);
-   
-  while(start.tv_sec < end_time)
+
+  int thread_block_complete = 0;   
+  while((start.tv_sec < end_time) && thread_block_complete == 0)
   {
     
     lseek(fp_start_addr,start_address , SEEK_SET);
@@ -88,6 +91,7 @@ read_write_op(void * param)
     if(start_address >= end_address)
     {
       start_address = thread_data[thread_id].from * block_size;
+      thread_block_complete = 1;
     }
     //copying from source file
     fread(buff, block_size, 1, src_fp);
@@ -129,7 +133,8 @@ seq_read_op(void* param)
  // fp_end_addr = thread_data[thread_id].thread_fp + end_address;
   //inital seek of the src file pointer
    
-  while(start.tv_sec < end_time)
+  int thread_block_complete = 0;   
+  while((start.tv_sec < end_time) && thread_block_complete == 0)
   {
     
     lseek(fp_start_addr,start_address , SEEK_SET);
@@ -139,6 +144,7 @@ seq_read_op(void* param)
     if(start_address >= end_address)
     {
       start_address = thread_data[thread_id].from * block_size;
+      thread_block_complete = 1;
     }
     //copying from source file
 
@@ -216,9 +222,10 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
   clock_gettime(CLOCK_REALTIME,&end);
   double total_op = get_total_op(no_threads);
   printf("%lf\n",total_op);
-  double total_sec = (double)(end.tv_nsec-start.tv_nsec/1000000)+(double)end.tv_sec-start.tv_sec;
+  double total_sec = (double)(end.tv_nsec-start.tv_nsec/1000000000)+(double)end.tv_sec-start.tv_sec;
 
   throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
+  //mesure in ms
   latency = (total_sec / (double) total_op) * 1000;
   printf("throughput %lf\n",throughput );
   printf("latency %lf\n",latency);
@@ -272,10 +279,33 @@ int main(int argc, char *argv[])
   int no_threads = 1;// 1,2,4,8
   int param_space = 1; // 1 read/write , 2 sequential write, 3 random write
   long  block_size = 1; //1 8B,2 8KB, 3 8MB, 4 80MB 
+  long byte_val[4] = {8,8192,8388608,83886080};
+
 
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
   block_size = atoi (argv[3]);
+  if(block_size == 2 || block_size == 3 || block_size == 4) // compute throughput only if block_size == 2,3,4
+  {
+    isThroughPut_op = true;
+  }
+
+  if(block_size == 1)
+  {
+    block_size = byte_val[block_size-1];
+  }
+  else if(block_size == 2)
+  {
+    block_size = byte_val[block_size-1];
+  }
+  else if(block_size == 3)
+  {
+    block_size = byte_val[block_size-1];
+  }
+  else if(block_size == 4)
+  {
+    block_size = byte_val[block_size-1];
+  }
 
   init_thread_data(no_threads,block_size);
 
