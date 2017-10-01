@@ -4,18 +4,15 @@
 #include <string.h>
 #include <immintrin.h>
 #include <stdint.h>
+#include <stdbool.h>
 
-#define ITERATIONS 1000000000
-#define EXEC_TIME 100
-#define BILLION 1000000000L
-#define INSTR 9
-#define MEMORY_CHUNK_SIZE 1000000000  //1GB
+#define MEMORY_CHUNK_SIZE 1073741824  //1GB
 #define EXP_DURATION 20 //20s 
 
 int *thread_op_array; //array holding total operations completed by each thread
 char *target_mem_ptr;
 char *source_mem_ptr;
-
+bool isThroughPut_op = false;
 struct thread_data_t
 {
   long block_size;
@@ -79,8 +76,8 @@ read_write_op(void * param)
  printf("block_size: %ld\n",block_size);
  printf("start_address: %ld\n",start_address);
  printf("end_address: %ld\n\n",end_address);*/
-
-  while(start.tv_sec < end_time)
+ int flag = 0;	
+  while((start.tv_sec < end_time) && flag == 0)
   {
     memcpy(trgt_start_addr, src_start_addr, block_size);
     clock_gettime(CLOCK_REALTIME, &start);
@@ -93,6 +90,7 @@ read_write_op(void * param)
     {
       trgt_start_addr = target_mem_ptr + start_address;
       src_start_addr = source_mem_ptr + start_address;
+	  flag = 1;
     }
 
     thread_total_op++;
@@ -192,19 +190,34 @@ rand_write_op(void* param)
 void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 {
   double latency, throughput;
-  struct timespec start,end;
-  clock_gettime(CLOCK_REALTIME,&start);
+  struct timeval start,end;
+  FILE *throughput_fp;
+  FILE *latency_fp;
+  
+  //clock_gettime(CLOCK_REALTIME,&start);
+  gettimeofday(&start, NULL);
   exec_threads(method, no_threads, block_size);
-  clock_gettime(CLOCK_REALTIME,&end);
+  //clock_gettime(CLOCK_REALTIME,&end);
+  gettimeofday(&end, NULL);
   double total_op = get_total_op(no_threads);
   printf("%lf\n",total_op);
-  double total_sec = (double)(end.tv_nsec-start.tv_nsec/1000000)+(double)end.tv_sec-start.tv_sec;
-
-  throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
-  latency = (total_sec / (double) total_op) * 1000000;
-  printf("throughput %lf\n",throughput );
-  printf("latency %lf\n",latency);
-
+  double total_sec = (double)((end.tv_usec-start.tv_usec)/1000000)+(double)end.tv_sec-start.tv_sec;
+ 
+  if(isThroughPut_op){
+	throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
+	printf("throughput %lf\n",throughput );
+    throughput_fp = fopen("throughput_result", "a+"); //append the results in csv file
+    //fseek(throughput_fp, 0, SEEK_END);
+    fprintf(throughput_fp, "%3ld %3i %3f\n", block_size, no_threads, throughput);
+    fclose(throughput_fp);
+  } else{
+	latency = (total_sec / (double) total_op) * 1000000;
+	printf("latency %lf\n",latency);
+	latency_fp = fopen("latency_result", "a+"); //append the results in csv file
+    //fseek(latency_fp, 0, SEEK_END);
+    fprintf(latency_fp, "%l\t%i\t%f\n", block_size, no_threads,latency);
+    fclose(latency_fp);
+  }
 }
 
 void exec_threads (void *method, int no_threads, int block_size)
@@ -252,10 +265,30 @@ int main(int argc, char *argv[])
   int no_threads = 1;// 1,2,4,8
   int param_space = 1; // 1 read/write , 2 sequential write, 3 random write
   long  block_size = 1; //1 8B,2 8KB, 3 8MB, 4 80MB 
+  long byte_val[4] = {8,8192,8388608,83886080};  
 
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
   block_size = atoi (argv[3]);
+
+  if(block_size == 2 || block_size == 3 || block_size == 4) // compute throughput only if block_size == 2,3,4
+  {
+	isThroughPut_op = true;  
+  }
+  
+  if(block_size == 1)
+  {
+    block_size = byte_val[block_size-1];
+  } else if(block_size == 2)
+  {
+    block_size = byte_val[block_size-1];
+  } else if(block_size == 3)
+  {
+    block_size = byte_val[block_size-1];
+  } else if(block_size == 4)
+  {
+    block_size = byte_val[block_size-1];
+  }
 
   init_thread_data(no_threads,block_size);
 
