@@ -1,5 +1,5 @@
 memory_benchmark: memory_benchmark.o
-	gcc -o  -flto -O2  memory_benchmark.o -lpthread
+	gcc -o memory_benchmark -flto -O2  memory_benchmark.o -lpthread
 memory_benchmark.o: memory_benchmark.s
 	gcc -c -flto -O2 memory_benchmark.s
 memory_benchmark.s: memory_benchmark.c

@@ -13,7 +13,7 @@
 #define EXP_DURATION 20 //20s 
 
 int *thread_op_array; //array holding total operations completed by each thread
-char *targer_mem_ptr;
+char *target_mem_ptr;
 char *source_mem_ptr;
 
 struct thread_data_t
@@ -50,15 +50,55 @@ void*
 read_write_op(void * param)
 {
   
-  int thread_id = *((int *)param);
+  int thread_id = (int )param;
   struct timespec start;
+  long start_address;
+  long end_address;
+  char *src_start_addr;
+  char *trgt_start_addr;
+  char *src_end_addr;
+  char *trgt_end_addr;
+  long block_size;
+  long thread_total_op = 0;
+  long end_time;
 
-  while(start.tv_sec < start.tv_sec + EXP_DURATION)
+  clock_gettime(CLOCK_REALTIME, &start);
+  end_time = start.tv_sec + EXP_DURATION;
+
+  block_size = thread_data[thread_id].block_size;
+  start_address = thread_data[thread_id].from * thread_data[thread_id].block_size;
+  end_address = thread_data[thread_id].to * thread_data[thread_id].block_size + thread_data[thread_id].block_size - 1;
+  
+ src_start_addr = source_mem_ptr + start_address;
+ src_end_addr = source_mem_ptr + end_address;
+  
+ trgt_start_addr = target_mem_ptr + start_address;
+ trgt_end_addr = target_mem_ptr + end_address;
+ /*
+ printf("thread id: %d\n",thread_id);
+ printf("block_size: %ld\n",block_size);
+ printf("start_address: %ld\n",start_address);
+ printf("end_address: %ld\n\n",end_address);*/
+
+  while(start.tv_sec < end_time)
   {
-   // memcpy(target_mem_p,tr,source_mem_ptr,thread_data[thread_id]->block_size);
-    clock_gettime(CLOCK_REALTIME,&start);
-    thread_op_array[thread_id]++; 
+    memcpy(trgt_start_addr, src_start_addr, block_size);
+    clock_gettime(CLOCK_REALTIME, &start);
+//    printf("thread %d,trgt_start_addr %p src_start_addr %p time:%ld\n",thread_id,trgt_start_addr,src_start_addr,start.tv_sec);
+
+    trgt_start_addr += block_size;
+    src_start_addr += block_size;
+
+    if(trgt_start_addr >= trgt_end_addr)
+    {
+      trgt_start_addr = target_mem_ptr + start_address;
+      src_start_addr = source_mem_ptr + start_address;
+    }
+
+    thread_total_op++;
   }
+  thread_op_array[thread_id] = thread_total_op;
+  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 }
 
 void*
@@ -66,10 +106,9 @@ seq_write_op(void* param)
 { 
   int thread_id = *((int *)param);
   struct timespec start;
-
-  while(start.tv_sec < start.tv_sec + EXP_DURATION)
+ while(start.tv_sec < start.tv_sec + EXP_DURATION)
   {
-   // memcpy(target_mem_p,tr,source_mem_ptr,thread_data[thread_id]->block_size);
+    //memcpy(target_mem_p,start_address,thread_data[thread_id]->block_size);
     clock_gettime(CLOCK_REALTIME,&start);
     thread_op_array[thread_id]++; 
   }
@@ -93,15 +132,17 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, int block_size)
 {
   double latency, throughput;
   struct timespec start,end;
-  source_mem_ptr = (char *) malloc(sizeof(char) * block_size);
   clock_gettime(CLOCK_REALTIME,&start);
   exec_threads(method, no_threads, block_size);
   clock_gettime(CLOCK_REALTIME,&end);
   double total_op = get_total_op(no_threads);
+  printf("%lf\n",total_op);
   double total_sec = (double)(end.tv_nsec-start.tv_nsec/1000000)+(double)end.tv_sec-start.tv_sec;
 
   throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
   latency = (total_sec / (double) total_op) * 1000000;
+  printf("throughput %lf\n",throughput );
+  printf("latency %lf\n",latency);
 
 }
 
@@ -111,7 +152,7 @@ void exec_threads (void *method, int no_threads, int block_size)
   int i;  
   for (i = 0; i < no_threads; i++)
   {
-    pthread_create (&thread[i], NULL, method, (void *)&i);
+    pthread_create (&thread[i], NULL, method, (void *)i);
   }  
 
   for (i = 0; i < no_threads; i++)
@@ -119,12 +160,19 @@ void exec_threads (void *method, int no_threads, int block_size)
     pthread_join(thread[i],NULL);
   }
 }
-
+void release_thread_data()
+{
+   free(target_mem_ptr);
+   free(source_mem_ptr);
+   free(thread_data);
+   free(thread_op_array);
+}
 void init_thread_data(int no_threads, int block_size)
 {
   int i=0;
   int block_count;
-  targer_mem_ptr = (char *) malloc(MEMORY_CHUNK_SIZE);//initialize memory
+  target_mem_ptr = (char *) malloc(MEMORY_CHUNK_SIZE);//initialize memory
+  source_mem_ptr = (char *) malloc(MEMORY_CHUNK_SIZE);
   thread_data = (struct thread_data_t *)malloc(sizeof(struct thread_data_t) * no_threads);
   
   block_count = MEMORY_CHUNK_SIZE / block_size;
@@ -162,6 +210,7 @@ int main(int argc, char *argv[])
   {
     calculate_mem_perf( rand_write_op,no_threads, block_size);
   }
+  release_thread_data();
   return 0; 
 }
 
