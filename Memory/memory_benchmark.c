@@ -146,15 +146,47 @@ seq_write_op(void* param)
 void*
 rand_write_op(void* param)
 { 
-  int thread_id = *((int *)param);
+  int thread_id = (int )param;
   struct timespec start;
+  long start_address;
+  long end_address;
+  char *trgt_start_addr;
+  char *trgt_end_addr;
+  long block_size;
+  long thread_total_op = 0;
+  long end_time;
+  long no_blocks = 0;
 
-  while(start.tv_sec < start.tv_sec + EXP_DURATION)
+  srand(time(NULL));
+  clock_gettime(CLOCK_REALTIME, &start);
+  end_time = start.tv_sec + EXP_DURATION;
+
+  block_size = thread_data[thread_id].block_size;
+  start_address = thread_data[thread_id].from * block_size;
+  end_address = thread_data[thread_id].to * block_size + block_size - 1;
+
+  no_blocks = thread_data[thread_id].to - thread_data[thread_id].from;
+ 
+  trgt_start_addr = target_mem_ptr + start_address;
+  trgt_end_addr = target_mem_ptr + end_address;
+ 
+  while(start.tv_sec < end_time)
   {
-   // memcpy(target_mem_p,tr,source_mem_ptr,thread_data[thread_id]->block_size);
+    memset(trgt_start_addr, '$', block_size);
     clock_gettime(CLOCK_REALTIME,&start);
-    thread_op_array[thread_id]++; 
+    
+    trgt_start_addr += (rand()% no_blocks) * block_size;
+
+    if(trgt_start_addr >= trgt_end_addr)
+    {
+      trgt_start_addr = target_mem_ptr + start_address;
+    }
+
+    thread_total_op++; 
   }
+  
+  thread_op_array[thread_id] = thread_total_op;
+  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 } 
 
 void calculate_mem_perf(void* (*method)(void *),int no_threads, int block_size)
