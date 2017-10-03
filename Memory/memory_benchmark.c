@@ -66,8 +66,8 @@ read_write_op(void * param)
   end_time = start.tv_sec + EXP_DURATION;
 
   block_size = thread_data[thread_id].block_size;
-  start_address = thread_data[thread_id].from * thread_data[thread_id].block_size;
-  end_address = thread_data[thread_id].to * thread_data[thread_id].block_size + thread_data[thread_id].block_size - 1;
+  start_address = thread_data[thread_id].from * block_size;
+  end_address = thread_data[thread_id].to * block_size + block_size - 1;
   
  src_start_addr = source_mem_ptr + start_address;
  src_end_addr = source_mem_ptr + end_address;
@@ -104,14 +104,43 @@ read_write_op(void * param)
 void*
 seq_write_op(void* param)
 { 
-  int thread_id = *((int *)param);
+  int thread_id = (int )param;
   struct timespec start;
- while(start.tv_sec < start.tv_sec + EXP_DURATION)
+  long start_address;
+  long end_address;
+  char *trgt_start_addr;
+  char *trgt_end_addr;
+  long block_size;
+  long thread_total_op = 0;
+  long end_time;
+
+  clock_gettime(CLOCK_REALTIME, &start);
+  end_time = start.tv_sec + EXP_DURATION;
+
+  block_size = thread_data[thread_id].block_size;
+  start_address = thread_data[thread_id].from * block_size;
+  end_address = thread_data[thread_id].to * block_size + block_size - 1;
+  
+  trgt_start_addr = target_mem_ptr + start_address;
+  trgt_end_addr = target_mem_ptr + end_address;
+ 
+  while(start.tv_sec < end_time)
   {
-    //memcpy(target_mem_p,start_address,thread_data[thread_id]->block_size);
+    memset(trgt_start_addr, '$', block_size);
     clock_gettime(CLOCK_REALTIME,&start);
-    thread_op_array[thread_id]++; 
+    
+    trgt_start_addr += block_size;
+
+    if(trgt_start_addr >= trgt_end_addr)
+    {
+      trgt_start_addr = target_mem_ptr + start_address;
+    }
+
+    thread_total_op++; 
   }
+  
+  thread_op_array[thread_id] = thread_total_op;
+  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 }
 
 void*
