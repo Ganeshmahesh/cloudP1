@@ -18,7 +18,7 @@ char *source_mem_ptr;
 
 struct thread_data_t
 {
-  int block_size;
+  long block_size;
   int from;
   int to;
 } *thread_data;
@@ -189,7 +189,7 @@ rand_write_op(void* param)
   printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 } 
 
-void calculate_mem_perf(void* (*method)(void *),int no_threads, int block_size)
+void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 {
   double latency, throughput;
   struct timespec start,end;
@@ -228,7 +228,7 @@ void release_thread_data()
    free(thread_data);
    free(thread_op_array);
 }
-void init_thread_data(int no_threads, int block_size)
+void init_thread_data(int no_threads, long block_size)
 {
   int i=0;
   int block_count;
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 {
   int no_threads = 1;// 1,2,4,8
   int param_space = 1; // 1 read/write , 2 sequential write, 3 random write
-  int block_size = 1; //1 8B,2 8KB, 3 8MB, 4 80MB 
+  long  block_size = 1; //1 8B,2 8KB, 3 8MB, 4 80MB 
 
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
