@@ -50,53 +50,53 @@ rand_read_op(void* param);
 void*
 read_write_op(void * param)
 {
-  
-  int thread_id = (int )param;
+  int thread_id = (int )(intptr_t)param;
   struct timespec start;
   long start_address;
   long end_address;
-  char *src_start_addr;
-  char *trgt_start_addr;
-  char *src_end_addr;
-  char *trgt_end_addr;
+  FILE *fp_start_addr;
   long block_size;
   long thread_total_op = 0;
   long end_time;
+  char *buff;
+  FILE *src_fp;
 
+  src_fp = fopen("read_write_test_src.txt","r+");
   clock_gettime(CLOCK_REALTIME, &start);
   end_time = start.tv_sec + EXP_DURATION;
 
   block_size = thread_data[thread_id].block_size;
+
+  buff = (char *) malloc(block_size);
+
   start_address = thread_data[thread_id].from * block_size;
   end_address = thread_data[thread_id].to * block_size + block_size - 1;
   
- src_start_addr = source_mem_ptr + start_address;
- src_end_addr = source_mem_ptr + end_address;
-  
- trgt_start_addr = target_mem_ptr + start_address;
- trgt_end_addr = target_mem_ptr + end_address;
- /*
- printf("thread id: %d\n",thread_id);
- printf("block_size: %ld\n",block_size);
- printf("start_address: %ld\n",start_address);
- printf("end_address: %ld\n\n",end_address);*/
-
+  fp_start_addr = thread_data[thread_id].thread_fp;
+  lseek(fp_start_addr, start_address, SEEK_SET);//Initial seek to the thread file boundary
+ // fp_end_addr = thread_data[thread_id].thread_fp + end_address;
+  //inital seek of the src file pointer
+  lseek(src_fp, start_address, SEEK_SET);
+   
   while(start.tv_sec < end_time)
   {
-    memcpy(trgt_start_addr, src_start_addr, block_size);
-    clock_gettime(CLOCK_REALTIME, &start);
-//    printf("thread %d,trgt_start_addr %p src_start_addr %p time:%ld\n",thread_id,trgt_start_addr,src_start_addr,start.tv_sec);
+    
+    lseek(fp_start_addr,start_address , SEEK_SET);
+    lseek(src_fp,start_address , SEEK_SET);
 
-    trgt_start_addr += block_size;
-    src_start_addr += block_size;
-
-    if(trgt_start_addr >= trgt_end_addr)
+    start_address += block_size;
+    if(start_address >= end_address)
     {
-      trgt_start_addr = target_mem_ptr + start_address;
-      src_start_addr = source_mem_ptr + start_address;
+      start_address = thread_data[thread_id].from * block_size;
     }
+    //copying from source file
+    fread(buff, block_size, 1, src_fp);
+    //writing contents to target file
+    fwrite(buff, block_size, 1, fp_start_addr);
 
-    thread_total_op++;
+    clock_gettime(CLOCK_REALTIME,&start);
+    thread_total_op++; 
+    printf("start_address %ld \n",start_address);
   }
   thread_op_array[thread_id] = thread_total_op;
   printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
@@ -105,12 +105,11 @@ read_write_op(void * param)
 void*
 seq_read_op(void* param)
 { 
-  int thread_id = (int )param;
+  int thread_id = (int )(intptr_t)param;
   struct timespec start;
   long start_address;
   long end_address;
   FILE *fp_start_addr;
-  FILE *fp_end_addr;
   long block_size;
   long thread_total_op = 0;
   long end_time;
@@ -126,81 +125,85 @@ seq_read_op(void* param)
   start_address = thread_data[thread_id].from * block_size;
   end_address = thread_data[thread_id].to * block_size + block_size - 1;
   
-  fp_start_addr = thread_data[thread_id].thread_fp + start_address;
-  fp_end_addr = thread_data[thread_id].thread_fp + end_address;
- 
+  fp_start_addr = thread_data[thread_id].thread_fp;
+ // fp_end_addr = thread_data[thread_id].thread_fp + end_address;
+  //inital seek of the src file pointer
+   
   while(start.tv_sec < end_time)
   {
-    fgets(buff, block_size, fp_start_addr);
-    clock_gettime(CLOCK_REALTIME,&start);
     
     lseek(fp_start_addr,start_address , SEEK_SET);
+    fread(buff, block_size, 1, fp_start_addr);
+
     start_address += block_size;
     if(start_address >= end_address)
     {
       start_address = thread_data[thread_id].from * block_size;
     }
+    //copying from source file
 
+    clock_gettime(CLOCK_REALTIME,&start);
     thread_total_op++; 
     printf("start_address %ld \n",start_address);
   }
-  
   thread_op_array[thread_id] = thread_total_op;
+  
   printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 }
 
 void*
 rand_read_op(void* param)
 { 
-  int thread_id = (int )param;
+  int thread_id = (int )(intptr_t)param;
   struct timespec start;
   long start_address;
   long end_address;
   FILE *fp_start_addr;
-  FILE *fp_end_addr;
   long block_size;
   long thread_total_op = 0;
   long end_time;
-  long no_blocks = 0;
   char *buff;
   long from;
-
-
-  buff = (char *) malloc(block_size);
+  long no_blocks = 0;
   
   srand(time(NULL));
   clock_gettime(CLOCK_REALTIME, &start);
+
   end_time = start.tv_sec + EXP_DURATION;
 
   block_size = thread_data[thread_id].block_size;
+
+  buff = (char *) malloc(block_size);
+
   start_address = thread_data[thread_id].from * block_size;
   end_address = thread_data[thread_id].to * block_size + block_size - 1;
-  
+   
   from = thread_data[thread_id].from;
-
   no_blocks = thread_data[thread_id].to - thread_data[thread_id].from;
- 
-  fp_start_addr = thread_data[thread_id].thread_fp + start_address;
-  fp_end_addr =  thread_data[thread_id].thread_fp  + end_address;
- 
+
+  fp_start_addr = thread_data[thread_id].thread_fp;
+ // fp_end_addr = thread_data[thread_id].thread_fp + end_address;
+  //inital seek of the src file pointer
+   
   while(start.tv_sec < end_time)
   {
-    fgets(buff, block_size, fp_start_addr);
-    clock_gettime(CLOCK_REALTIME,&start);
     
+    lseek(fp_start_addr,start_address , SEEK_SET);
+    fread(buff, block_size, 1, fp_start_addr);
+ 
     start_address =  (from + (rand()% no_blocks)) * block_size; 
-    lseek(fp_start_addr, start_address, SEEK_SET);
-
     if(start_address >= end_address)
     {
       start_address = thread_data[thread_id].from * block_size;
     }
+    //copying from source file
 
+    clock_gettime(CLOCK_REALTIME,&start);
     thread_total_op++; 
     printf("start_address %ld \n",start_address);
   }
-  
-  thread_op_array[thread_id] = thread_total_op;
+
+  thread_op_array[thread_id] = thread_total_op; 
   printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 } 
 
@@ -229,7 +232,7 @@ void exec_threads (void *method, int no_threads, int block_size)
   int i;  
   for (i = 0; i < no_threads; i++)
   {
-    pthread_create (&thread[i], NULL, method, (void *)i);
+    pthread_create (&thread[i], NULL, method, (void *)(intptr_t)i);
   }  
 
   for (i = 0; i < no_threads; i++)
@@ -251,7 +254,7 @@ void init_thread_data(int no_threads, long block_size)
   //target_mem_ptr = (char *) malloc(MEMORY_CHUNK_SIZE);//initialize memory
   //source_mem_ptr = (char *) malloc(MEMORY_CHUNK_SIZE);
   thread_data = (struct thread_data_t *)malloc(sizeof(struct thread_data_t) * no_threads);
-  FILE *fp = fopen("disk_file.txt","r+");
+  //FILE *fp = fopen("disk_file.txt","r+");
   block_count = FILE_SIZE / block_size;
   for(i=0;i<no_threads;i++)
   {
