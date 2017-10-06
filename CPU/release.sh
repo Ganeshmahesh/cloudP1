@@ -3,6 +3,7 @@
 make clean
 rm IOPS
 rm FLOPS
+rm cpuPerf.png
 
 #build
 make
@@ -33,5 +34,4 @@ make
 #thread 8
 ./test 2 2 8
 
-gnuplot
-load 'plot.p'
+gnuplot 'plot.p'

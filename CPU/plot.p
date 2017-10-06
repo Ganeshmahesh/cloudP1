@@ -22,8 +22,6 @@ set output "cpuPerf.png"
 replot
 set term x11
 
-load 'saveplot'
-!mv my-plot.ps force.ps
-!lpr force.ps
-
-
+#load 'saveplot'
+#!mv my-plot.ps force.ps
+#!lpr force.ps

@@ -5,18 +5,20 @@
 #include <immintrin.h>
 #include <stdint.h>
 
-#define ITERATIONS 1000000000
+//#define ITERATIONS 1000000000
 #define EXEC_TIME 100
 #define BILLION 1000000000L
 #define INSTR 9
 
+long ITERATIONS;
 FILE *fp=NULL;
-long c[8];
+//long c[8];
 void calculate_IOPS (int no_threads);
 void calculate_FLOPS (int no_threads);
-void run_tensec_exp (void (*method)(void *), int no_threads);
+//void run_tensec_exp (void (*method)(void *), int no_threads);
 void exec_threads (void *,int);
-void *tensecexp_exec(void *param);
+//void *tensecexp_exec(void *param);
+
 void *
 compute_integer_op (void *param)
 {
@@ -36,10 +38,10 @@ compute_integer_op (void *param)
     k = k + a1+a2+a3+a4+a5+a6+a7+a8;
     i++;
   }
-  printf ("completed thread:%d\n",  param);
+  //printf ("completed thread:%d\n", (intptr_t) param);
   //pthread_exit (NULL);
 }
-
+/*
 struct tensec_args_struct
 {
   void (*method)(void *);
@@ -59,7 +61,7 @@ tensecexp_exec (void *param)
    printf("c[arg->index] %ld\n",c[arg->index]);
   }
 }
-
+*/
 void *
 compute_float_op (void *param)
 {
@@ -74,13 +76,12 @@ compute_float_op (void *param)
   volatile double a7=9.0;
   volatile double a8=3.0;
 
-
   while (i < ITERATIONS)
   {
     k = k + a1+a2+a3+a4+a5+a6+a7+a8;
     i++; 
   }
-  printf ("completed thread:%d\n",  param);
+  //printf ("completed thread:%d\n", (intptr_t) param);
   //pthread_exit (NULL);
 }
 
@@ -91,7 +92,7 @@ void exec_threads (void *method, int no_threads)
 	int i;	
 	for (i = 0; i < no_threads; i++)
   {
-    pthread_create (&thread[i], NULL, method, (void *)i);
+    pthread_create (&thread[i], NULL, method, (void *)(intptr_t)i);
   }  
 
  for (i = 0; i < no_threads; i++)
@@ -127,29 +128,30 @@ compute_avx (void *param)
 
 void calculate_FLOPS (int no_threads)
 {
-	
   struct timespec start, end;
-  uint64_t diff;
-  double gflops= 0.0f;
+  uint64_t  total_time;
+  long double gflops= 0.0f;
 
 	clock_gettime (CLOCK_REALTIME, &start );
 	exec_threads (compute_float_op, no_threads);
-	clock_gettime(CLOCK_REALTIME,&end );
-	//TODO:FLOPS calculation
-	
-  diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-  //printf("start time : %ld\n", start.tv_sec);
-  //printf("end time : %ld\n", end.tv_sec);
-  //printf(" %llu time elapsed in nano seconds\n", diff);
-  //printf(" %llu time elapsed in seconds\n", end.tv_sec-start.tv_sec);
+	clock_gettime(CLOCK_REALTIME, &end);
 
-  gflops = ((long double)ITERATIONS * INSTR) / diff;
-  //printf("FLOPS = %lf\n",gflops);
-  fprintf(fp,"%d  %lf\n",no_threads,gflops);
-
+	//TODO:verify FLOPS calculation
+  //time in sec
+  total_time = BILLION * (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec);
+/*
+  printf("start time : %ld\n", start.tv_sec);
+  printf("end time : %ld\n", end.tv_sec);
+  printf("nano seconds %ld %ld\n",end.tv_nsec, start.tv_nsec);
+  printf(" %lld time elapsed in nano seconds\n", total_time);
+  printf(" %lld time elapsed in seconds\n", ((BILLION * end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec)));
+*/
+  gflops = ((long double)BILLION * INSTR) / total_time;
+ // printf("FLOPS = %llf\n",gflops);
+  fprintf(fp,"%d  %llf\n",no_threads,gflops);
 }
 
-
+/*
 void *
 time_tracker(void *k)
 {
@@ -166,7 +168,6 @@ time_tracker(void *k)
   }
   
 }
-
 
 void run_tensec_exp(void (*method)(void *),int no_threads)
 {
@@ -193,33 +194,32 @@ void run_tensec_exp(void (*method)(void *),int no_threads)
   }
   printf("600 samples taken from 10 min exp");
 }
-
+*/
 void calculate_IOPS (int no_threads)
 {
 
   struct timespec start, end;
-  uint64_t diff;
-  double giops = 0.0f;
+  uint64_t total_time;
+  long double iops = 0.0f;
 
 	clock_gettime (CLOCK_REALTIME, &start );
 	exec_threads (compute_integer_op, no_threads);
 	//exec_threads (compute_avx, no_threads);
 	clock_gettime(CLOCK_REALTIME,&end );
 	//TODO:IOPS calculation
-	
-  diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+	//total time including the nanosec difference
+  total_time = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
   //printf("start time : %ld\n", start.tv_sec);
   //printf("end time : %ld\n", end.tv_sec);
-  //printf(" %llu time elapsed in nano seconds\n", diff);
- // printf(" %llu time elapsed in seconds\n", end.tv_sec-start.tv_sec);
-  giops = ((double)ITERATIONS * INSTR) / diff;
-  //printf("GIOPS = %lf\n",giops);
-  fprintf(fp,"%d  %lf\n",no_threads,giops);
+  //printf(" %llu time elapsed in nano seconds\n", total_time);
+  //printf(" %llu time elapsed in seconds\n", end.tv_sec-start.tv_sec);
+  iops = ((double)BILLION * INSTR) / total_time;
+  //printf("iops %llf\n",iops);
+  fprintf(fp,"%d  %llf\n",no_threads,iops);
 }
 
 int main (int argc, char *argv[])
-{
- 
+{ 
   int no_threads = 1;// 1,2,4,8
   int operation = 1; // 1 Integer , 2 Float
   int exp = 2; //1 10 sec exp, 2 Thread
@@ -227,7 +227,9 @@ int main (int argc, char *argv[])
   no_threads = atoi (argv[3]);
   operation = atoi (argv[1]);
   exp = atoi (argv[2]);
-  
+
+  ITERATIONS = BILLION / no_threads;
+
   if(operation ==1)//Integer test
   {
     if(exp==2)//Thread test
@@ -237,7 +239,7 @@ int main (int argc, char *argv[])
     }
 		else
 		{
-			run_tensec_exp (compute_integer_op,8);//integer 10 sec exp
+			//run_tensec_exp (compute_integer_op,8);//integer 10 sec exp
 		}
 	}
 	else
@@ -249,7 +251,7 @@ int main (int argc, char *argv[])
     }
     else
     {
-      run_tensec_exp (compute_float_op,8);//float 10 sec exp
+     // run_tensec_exp (compute_float_op,8);//float 10 sec exp
     }
   }
   return 0;	
