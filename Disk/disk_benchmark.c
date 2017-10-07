@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
   block_size = atoi (argv[3]);
-
+ 
   init_thread_data(no_threads,block_size);
 
   if(param_space ==1)//read/write operation
