@@ -47,7 +47,7 @@ void*
 read_write_op(void * param)
 {
   
-  int thread_id = (int )param;
+  int thread_id = (int )(intptr_t)param;
   struct timespec start;
   long start_address;
   long end_address;
@@ -102,7 +102,7 @@ read_write_op(void * param)
 void*
 seq_write_op(void* param)
 { 
-  int thread_id = (int )param;
+  int thread_id = (int )(intptr_t)param;
   struct timespec start;
   long start_address;
   long end_address;
@@ -121,8 +121,8 @@ seq_write_op(void* param)
   
   trgt_start_addr = target_mem_ptr + start_address;
   trgt_end_addr = target_mem_ptr + end_address;
- 
-  while(start.tv_sec < end_time)
+  int flag = 0; 
+  while((start.tv_sec < end_time) && flag ==0 )
   {
     memset(trgt_start_addr, '$', block_size);
     clock_gettime(CLOCK_REALTIME,&start);
@@ -132,6 +132,7 @@ seq_write_op(void* param)
     if(trgt_start_addr >= trgt_end_addr)
     {
       trgt_start_addr = target_mem_ptr + start_address;
+      flag = 1;
     }
 
     thread_total_op++; 
@@ -144,7 +145,7 @@ seq_write_op(void* param)
 void*
 rand_write_op(void* param)
 { 
-  int thread_id = (int )param;
+  int thread_id = (int )(intptr_t)param;
   struct timespec start;
   long start_address;
   long end_address;
@@ -211,6 +212,7 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
     fprintf(throughput_fp, "%3ld %3i %3f\n", block_size, no_threads, throughput);
     fclose(throughput_fp);
   } else{
+  //measure in micro sec
 	latency = (total_sec / (double) total_op) * 1000000;
 	printf("latency %lf\n",latency);
 	latency_fp = fopen("latency_result", "a+"); //append the results in csv file
@@ -226,7 +228,7 @@ void exec_threads (void *method, int no_threads, int block_size)
   int i;  
   for (i = 0; i < no_threads; i++)
   {
-    pthread_create (&thread[i], NULL, method, (void *)i);
+    pthread_create (&thread[i], NULL, method, (void *)(intptr_t)i);
   }  
 
   for (i = 0; i < no_threads; i++)
@@ -273,7 +275,7 @@ int main(int argc, char *argv[])
 
   if(block_size == 2 || block_size == 3 || block_size == 4) // compute throughput only if block_size == 2,3,4
   {
-	isThroughPut_op = true;  
+	  isThroughPut_op = true;  
   }
   
   if(block_size == 1)
