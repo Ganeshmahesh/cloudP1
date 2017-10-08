@@ -38,7 +38,7 @@ long get_total_op(int no_threads)
 }
 
 void 
-exec_threads (void *method, int no_threads, int block_size);
+exec_threads (void *method, int no_threads, long block_size);
 
 void*
 read_write_op(void * param);
@@ -52,6 +52,7 @@ rand_read_op(void* param);
 void*
 read_write_op(void * param)
 {
+  
   int thread_id = (int )(intptr_t)param;
   struct timespec start;
   long start_address;
@@ -100,10 +101,10 @@ read_write_op(void * param)
 
     clock_gettime(CLOCK_REALTIME,&start);
     thread_total_op++; 
-    printf("start_address %ld \n",start_address);
+//    printf("start_address %ld \n",start_address);
   }
   thread_op_array[thread_id] = thread_total_op;
-  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
+//  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 }
 
 void*
@@ -150,11 +151,11 @@ seq_read_op(void* param)
 
     clock_gettime(CLOCK_REALTIME,&start);
     thread_total_op++; 
-    printf("start_address %ld \n",start_address);
+  //  printf("start_address %ld \n",start_address);
   }
   thread_op_array[thread_id] = thread_total_op;
   
-  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
+//  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 }
 
 void*
@@ -206,20 +207,22 @@ rand_read_op(void* param)
 
     clock_gettime(CLOCK_REALTIME,&start);
     thread_total_op++; 
-    printf("start_address %ld \n",start_address);
+//    printf("start_address %ld \n",start_address);
   }
 
   thread_op_array[thread_id] = thread_total_op; 
-  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
+//  printf("thread %d total op %ld\n",thread_id,thread_op_array[thread_id]);
 } 
 
 void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 {
   double latency, throughput;
   struct timespec start,end;
+
   clock_gettime(CLOCK_REALTIME,&start);
   exec_threads(method, no_threads, block_size);
   clock_gettime(CLOCK_REALTIME,&end);
+
   double total_op = get_total_op(no_threads);
   printf("%lf\n",total_op);
   double total_sec = (double)(end.tv_nsec-start.tv_nsec/1000000000)+(double)end.tv_sec-start.tv_sec;
@@ -233,7 +236,7 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 
 }
 
-void exec_threads (void *method, int no_threads, int block_size)
+void exec_threads (void *method, int no_threads, long block_size)
 {
   pthread_t thread[8];
   int i;  
@@ -306,6 +309,7 @@ int main(int argc, char *argv[])
   {
     block_size = byte_val[block_size-1];
   }
+ // printf("paramspace = %d, no_threads %d block_size %ld\n",param_space,no_threads,block_size);
 
   init_thread_data(no_threads,block_size);
 
