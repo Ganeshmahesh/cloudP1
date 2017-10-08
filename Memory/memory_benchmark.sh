@@ -7,6 +7,12 @@ make clean
 #build
 make
 
+cd stream
+gcc -fopenmp -D_OPENMP stream.c -o stream 
+export OMP_NUM_THREADS=2
+./stream
+
+cd ..
 for paramspace in {1,2,3}
 do
 	for no_threads in {1,2,4,8}
@@ -32,5 +38,5 @@ do
 		done
 	done	
 done
-	
+
 #gnuplot 'plot.p'
