@@ -225,7 +225,7 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 
   double total_op = get_total_op(no_threads);
   printf("%lf\n",total_op);
-  double total_sec = (double)(end.tv_nsec-start.tv_nsec/1000000000)+(double)end.tv_sec-start.tv_sec;
+  double total_sec = (double)((end.tv_nsec-start.tv_nsec)/1000000000)+(double)end.tv_sec-start.tv_sec;
 
   throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
   //mesure in ms
