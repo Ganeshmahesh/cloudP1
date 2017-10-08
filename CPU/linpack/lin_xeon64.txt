@@ -1,9 +1,9 @@
-Fri Oct  6 17:01:15 UTC 2017
+Sun Oct  8 16:26:05 UTC 2017
 Intel(R) LINPACK data
 
-Current date/time: Fri Oct  6 17:01:15 2017
+Current date/time: Sun Oct  8 16:26:05 2017
 
-CPU frequency:    2.234 GHz
+CPU frequency:    2.598 GHz
 Number of CPUs: 2
 Number of cores: 2
 Number of threads: 2
@@ -21,14 +21,14 @@ Maximum memory requested that can be used = 3200404096, at the size = 20000
 ============= Timing linear equation system solver =================
 
 Size   LDA    Align. Time(s)    GFlops   Residual     Residual(norm)
-20000  20000  4      143.920    37.0632  4.097986e-10 3.627616e-02
-20000  20000  4      141.807    37.6155  4.097986e-10 3.627616e-02
+20000  20000  4      134.947    39.5275  4.097986e-10 3.627616e-02
+20000  20000  4      135.173    39.4616  4.097986e-10 3.627616e-02
 
 Performance Summary (GFlops)
 
 Size   LDA    Align.  Average  Maximal
-20000  20000  4       37.3394  37.6155 
+20000  20000  4       39.4945  39.5275 
 
 End of tests
 
-Fri Oct  6 17:06:47 UTC 2017
+Sun Oct  8 16:31:17 UTC 2017
