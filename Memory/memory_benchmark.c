@@ -209,7 +209,7 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 	printf("throughput %lf\n",throughput );
     throughput_fp = fopen("throughput_result", "a+"); //append the results in csv file
     //fseek(throughput_fp, 0, SEEK_END);
-    fprintf(throughput_fp, "%3ld %3i %3f\n", block_size, no_threads, throughput);
+    fprintf(throughput_fp, "%ld\t%i\t%3\n", block_size, no_threads, throughput);
     fclose(throughput_fp);
   } else{
   //measure in micro sec
@@ -217,7 +217,7 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 	printf("latency %lf\n",latency);
 	latency_fp = fopen("latency_result", "a+"); //append the results in csv file
     //fseek(latency_fp, 0, SEEK_END);
-    fprintf(latency_fp, "%l\t%i\t%f\n", block_size, no_threads,latency);
+    fprintf(latency_fp, "%ld\t%i\t%f\n", block_size, no_threads,latency);
     fclose(latency_fp);
   }
 }
