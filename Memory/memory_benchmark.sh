@@ -1,8 +1,9 @@
 #!/bin/sh
 #clean
 make clean
+
 #remove old files
-#rm result.csv
+rm latency_result throughput_result
 
 #build
 make
