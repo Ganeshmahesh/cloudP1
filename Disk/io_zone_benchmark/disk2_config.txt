@@ -1,0 +1,3 @@
+H/W path        Device     Class          Description
+=====================================================
+/0/100/4/0      /dev/vda   disk           42GB Virtual I/O device

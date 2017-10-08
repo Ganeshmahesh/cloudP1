@@ -1,4 +1,4 @@
-no_threads 1 latency 0.000306
-no_threads 2 latency 0.000164
-no_threads 4 latency 0.000164
-no_threads 8 latency 0.000157
+1 0.000289
+2 0.000165
+4 0.000168
+8 0.000166

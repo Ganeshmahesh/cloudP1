@@ -230,13 +230,13 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
   if(isThroughPut_op)
   {
     throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
-    fprintf(fp,"no_threads %d throughput %lf\n", no_threads, throughput);
+    fprintf(fp,"%d %lf\n", no_threads, throughput);
   }
   else
   {
     //mesure in ms
     latency = (total_sec / (double) total_op) * 1000;
-    fprintf(fp,"no_threads %d latency %lf\n", no_threads, latency);
+    fprintf(fp,"%d %lf\n", no_threads, latency);
   }
   printf("total sec %lf\n",(double)end.tv_sec-start.tv_sec);
 
@@ -290,16 +290,14 @@ int main(int argc, char *argv[])
   long  block_size = 1; //1 8B,2 8KB, 3 8MB, 4 80MB 
   long byte_val[4] = {8,8192,8388608,83886080};
   volatile char *memory_dummy;
-  char filename[3];
+  char filename[3]={'\0','\0','\0'};
   
-  filename[0] = param_space;
-  filename[1] = block_size;
-  filename[2] = '\0';
   memory_dummy = (char *) malloc(sizeof(char)*BILLION*3);
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
   block_size = atoi (argv[3]);
-
+sprintf(filename,"%d%d",param_space,block_size);
+ 
   fp = fopen(filename,"a+");
   if(block_size == 2 || block_size == 3 || block_size == 4) // compute throughput only if block_size == 2,3,4
   {
@@ -339,7 +337,8 @@ int main(int argc, char *argv[])
     calculate_mem_perf( rand_read_op,no_threads, block_size);
   }
   
-  memory_dummy[15] = 0;
+  fclose(fp);
+  free((void *)memory_dummy);
   release_thread_data();
   return 0; 
 }

@@ -1,4 +1,4 @@
-no_threads 1 throughput 205.600000
-no_threads 2 throughput 508.800000
-no_threads 4 throughput 1260.800000
-no_threads 8 throughput 1644.800000
+1 404.000000
+2 392.000000
+4 1276.800000
+8 2809.600000
