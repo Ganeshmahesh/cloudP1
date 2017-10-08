@@ -49,7 +49,7 @@ echo "generating IOPS and FLOPS plot"
 gnuplot 'plot.p'
 
 #perform linpack test
-echo "executing linpack benchmark"
-cd linpack/
-./runme_xeon64
+#echo "executing linpack benchmark"
+#cd linpack/
+#./runme_xeon64
 
