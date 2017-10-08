@@ -14,9 +14,9 @@ set ylabel "Throughput(Mb/s)"
 #set arrow from 0.0028,250 to 0.003,280
 set xr [0:10]
 set yr [0:5]
-plot    "throughput_result" using 2:3 title '8KB' with linespoints , \
-         "throughput_result" using 2:3 title '8MB' with linespoints , \
-		 "throughput_result" using 2:3 title '80MB' with linespoints
+plot    "throughput_result" using 1:3 title '8KB' with linespoints , \
+         "throughput_result" using 1:3 title '8MB' with linespoints , \
+		 "throughput_result" using 1:3 title '80MB' with linespoints
 		 
 
 #set term png
