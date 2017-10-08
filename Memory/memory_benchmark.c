@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
   }
 
   init_thread_data(no_threads,block_size);
-
+  printf("Block size is %ld\n",block_size);
   if(param_space ==1)//read/write operation
   {
     calculate_mem_perf( read_write_op,no_threads, block_size);
