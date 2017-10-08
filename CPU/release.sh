@@ -42,7 +42,7 @@ echo "test with 4 thread is executing"
 ./test 2 2 4
 
 #thread 8
-echo "test with 1 thread is executing"
+echo "test with 8 thread is executing"
 ./test 2 2 8
 
 echo "generating IOPS and FLOPS plot"
