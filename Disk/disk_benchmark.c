@@ -17,6 +17,7 @@ int *thread_op_array; //array holding total operations completed by each thread
 char *target_mem_ptr;
 char *source_mem_ptr;
 bool isThroughPut_op = false;
+FILE *fp;
 
 struct thread_data_t
 {
@@ -226,12 +227,17 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
   double total_op = get_total_op(no_threads);
   printf("%lf\n",total_op);
   double total_sec = (double)((end.tv_nsec-start.tv_nsec)/1000000000)+(double)end.tv_sec-start.tv_sec;
-
-  throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
-  //mesure in ms
-  latency = (total_sec / (double) total_op) * 1000;
-  printf("throughput %lf\n",throughput );
-  printf("latency %lf\n",latency);
+  if(isThroughPut_op)
+  {
+    throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
+    fprintf(fp,"no_threads %d throughput %lf\n", no_threads, throughput);
+  }
+  else
+  {
+    //mesure in ms
+    latency = (total_sec / (double) total_op) * 1000;
+    fprintf(fp,"no_threads %d latency %lf\n", no_threads, latency);
+  }
   printf("total sec %lf\n",(double)end.tv_sec-start.tv_sec);
 
 }
@@ -283,11 +289,18 @@ int main(int argc, char *argv[])
   int param_space = 1; // 1 read/write , 2 sequential write, 3 random write
   long  block_size = 1; //1 8B,2 8KB, 3 8MB, 4 80MB 
   long byte_val[4] = {8,8192,8388608,83886080};
-
-
+  volatile char *memory_dummy;
+  char filename[3];
+  
+  filename[0] = param_space;
+  filename[1] = block_size;
+  filename[2] = '\0';
+  memory_dummy = (char *) malloc(sizeof(char)*BILLION*3);
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
   block_size = atoi (argv[3]);
+
+  fp = fopen(filename,"a+");
   if(block_size == 2 || block_size == 3 || block_size == 4) // compute throughput only if block_size == 2,3,4
   {
     isThroughPut_op = true;
@@ -325,6 +338,8 @@ int main(int argc, char *argv[])
   {
     calculate_mem_perf( rand_read_op,no_threads, block_size);
   }
+  
+  memory_dummy[15] = 0;
   release_thread_data();
   return 0; 
 }
