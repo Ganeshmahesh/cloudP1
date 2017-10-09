@@ -3,13 +3,14 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include <string.h>
 #include <immintrin.h>
 //#include <stdint.h>
 //#include <stdbool.h>
 
-#define ITERATIONS 100
+#define ITERATIONS 1
 //#define EXEC_TIME 100
 //#define BILLION 1000000000L
 //#define INSTR 9
@@ -24,7 +25,7 @@
 struct transmission_info_t
 {
   struct sockaddr_in server_addr;
-  short packet_size;
+  int packet_size;
 } transmission_info;
 /*
 struct thread_data_t
@@ -299,12 +300,17 @@ udp_client(void *client_arg)
   memset(packet, 'h', sizeof(char) * (transmission_info.packet_size));
 
   int client_sock = socket(AF_INET, SOCK_DGRAM, 0);
-
+  int sockaddr_size = sizeof(struct sockaddr_in);
   int i;
   for( i=0; i<ITERATIONS; ++i)
   {
-    sendto(client_sock, packet, transmission_info.packet_size,
-           0,(struct sockaddr *) &transmission_info.server_addr, sizeof(struct sockaddr_in));
+    //printf("serveraddr %d",transmission_info.packet_size);
+    int status = sendto(client_sock, packet, transmission_info.packet_size, 0,(struct sockaddr *) &transmission_info.server_addr, sizeof(struct sockaddr_in));
+
+    if (status< 0)
+      printf("send failed %s",strerror(errno));
+      recvfrom(client_sock, packet, transmission_info.packet_size, 0,(struct sockaddr *) &transmission_info.server_addr, &sockaddr_size);
+      printf("received %s",packet);
   }
  
 }
@@ -316,7 +322,7 @@ tcp_client(void *client_arg)
   //init packet
   char *packet = (char *) malloc(sizeof(char) * transmission_info.packet_size);
   memset(packet, 'h', sizeof(char) * (transmission_info.packet_size));
-
+  //strcpy(packet, "test");
   int client_sock = socket(AF_INET, SOCK_STREAM, 0);
   int connection_error = connect(client_sock,(struct sockaddr *) &transmission_info.server_addr, sizeof(struct sockaddr_in));
   if(connection_error == -1)
@@ -327,7 +333,15 @@ tcp_client(void *client_arg)
   int i;
   for( i=0; i<ITERATIONS; ++i)
   {
-    send(client_sock, packet, transmission_info.packet_size, 0);
+   int status;
+   status =  send(client_sock, packet, transmission_info.packet_size, 0);
+   if(status == -1)
+   {
+     printf("unable to send %s \n",strerror(errno));
+     pthread_exit(NULL);
+   }
+   recv(client_sock,packet,transmission_info.packet_size, 0); 
+   printf("response %s\n",packet);
   }
   
   close(client_sock);
@@ -340,7 +354,7 @@ void init_transmission_data(char *server_ip, int server_port, int packet_size)
   transmission_info.server_addr.sin_addr.s_addr = inet_addr(server_ip);
   transmission_info.server_addr.sin_port = htons(server_port);
   
-  transmission_info.packet_size = (short) packet_size;
+  transmission_info.packet_size = packet_size;
 }
  
 //arg list param_space no_threada block_size
@@ -361,8 +375,8 @@ int main(int argc, char *argv[])
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
   packet_size = atoi (argv[3]);
-  strcpy(server_ip, argv[4]);
-  server_port = atoi (argv[5]);
+//  strcpy(server_ip, argv[4]);
+ // server_port = atoi (argv[5]);
   /*
   if(block_size == 2 || block_size == 3 || block_size == 4) // compute throughput only if block_size == 2,3,4
   {
@@ -386,8 +400,12 @@ int main(int argc, char *argv[])
     block_size = byte_val[block_size-1];
   }
 */
-  packet_size = byte_val[packet_size - 1];
-  
+  if(param_space == 2)
+    packet_size = 65507; 
+  else
+    //65535
+    packet_size = byte_val[packet_size - 1];
+
   //thread must have buff size and server_addr
   init_transmission_data(server_ip,server_port, packet_size);
 
