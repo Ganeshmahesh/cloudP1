@@ -6,13 +6,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MEMORY_CHUNK_SIZE 1073741824  //1GB
+#define MEMORY_CHUNK_SIZE 1395864371  //1GB
 #define EXP_DURATION 20 //20s 
 
 int *thread_op_array; //array holding total operations completed by each thread
 char *target_mem_ptr;
 char *source_mem_ptr;
 bool isThroughPut_op = false;
+FILE *fp;
+
 struct thread_data_t
 {
   long block_size;
@@ -192,8 +194,8 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
 {
   double latency, throughput;
   struct timeval start,end;
-  FILE *throughput_fp;
-  FILE *latency_fp;
+  //FILE *throughput_fp;
+  //FILE *latency_fp;
   
   //clock_gettime(CLOCK_REALTIME,&start);
   gettimeofday(&start, NULL);
@@ -207,18 +209,20 @@ void calculate_mem_perf(void* (*method)(void *),int no_threads, long block_size)
   if(isThroughPut_op){
 	throughput = ((total_op * (double) block_size) / 1048576) / (double) total_sec;
 	printf("throughput %lf\n",throughput );
-    throughput_fp = fopen("throughput_result", "a+"); //append the results in csv file
+	fprintf(fp,"%d %lf\n", no_threads, throughput);
+    //throughput_fp = fopen("throughput_result", "a+"); //append the results in csv file
     //fseek(throughput_fp, 0, SEEK_END);
-    fprintf(throughput_fp, "%ld\t%i\t%lf\n", block_size, no_threads, throughput);
-    fclose(throughput_fp);
+    //fprintf(throughput_fp, "%ld\t%i\t%lf\n", block_size, no_threads, throughput);
+    //fclose(throughput_fp);
   } else{
   //measure in micro sec
 	latency = (total_sec / (double) total_op) * 1000000;
 	printf("latency %f\n",latency);
-	latency_fp = fopen("latency_result", "a+"); //append the results in csv file
+	fprintf(fp,"%d %lf\n", no_threads, latency);
+	//latency_fp = fopen("latency_result", "a+"); //append the results in csv file
     //fseek(latency_fp, 0, SEEK_END);
-    fprintf(latency_fp, "%ld\t%i\t%lf\n", block_size, no_threads,latency);
-    fclose(latency_fp);
+    //fprintf(latency_fp, "%ld\t%i\t%lf\n", block_size, no_threads,latency);
+    //fclose(latency_fp);
   }
 }
 
@@ -268,11 +272,14 @@ int main(int argc, char *argv[])
   int param_space = 1; // 1 read/write , 2 sequential write, 3 random write
   long  block_size = 1; //1 8B,2 8KB, 3 8MB, 4 80MB 
   long byte_val[4] = {8,8192,8388608,83886080};  
-
+  char filename[3]={'\0','\0','\0'};
+  
   no_threads = atoi (argv[2]);
   param_space = atoi (argv[1]);
   block_size = atoi (argv[3]);
-
+  sprintf(filename,"%d%d",param_space,block_size);
+  fp = fopen(filename,"a+");
+  
   if(block_size == 2 || block_size == 3 || block_size == 4) // compute throughput only if block_size == 2,3,4
   {
 	  isThroughPut_op = true;  
@@ -306,6 +313,7 @@ int main(int argc, char *argv[])
   {
     calculate_mem_perf( rand_write_op,no_threads, block_size);
   }
+  fclose(fp);
   release_thread_data();
   return 0; 
 }

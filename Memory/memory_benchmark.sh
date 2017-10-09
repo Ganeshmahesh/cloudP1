@@ -2,9 +2,6 @@
 #clean
 make clean
 
-#remove old files
-rm latency_result throughput_result
-
 #build
 make
 
@@ -14,6 +11,7 @@ export OMP_NUM_THREADS=8
 ./stream
 
 cd ..
+
 for paramspace in {1,2,3}
 do
 	for no_threads in {1,2,4,8}
@@ -27,4 +25,4 @@ do
 	done	
 done
 
-gnuplot 'plot.p'
+#gnuplot 'plot.p'
