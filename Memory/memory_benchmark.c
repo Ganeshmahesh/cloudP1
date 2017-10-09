@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MEMORY_CHUNK_SIZE 1395864371  //1GB
+#define MEMORY_CHUNK_SIZE 1395864371  //1.3GB
 #define EXP_DURATION 20 //20s 
 
 int *thread_op_array; //array holding total operations completed by each thread
