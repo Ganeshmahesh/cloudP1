@@ -1,0 +1,21 @@
+set   autoscale                        # scale axes automatically
+unset log                              # remove any log-scaling
+unset label                            # remove any previous labels
+set xtics out nomirror
+set ytic auto                         # set ytics automatically
+set title "Random Read Performance of Disk"
+set xlabel "Threads"
+set ylabel "Throughput (MB/sec)"
+set xr [0:10]
+set yr [0:6000]
+
+
+plot      "32" using 1:2 title '8KB' with linespoints , \
+            "33" using 1:2 title '8MB' with linespoints , \
+              "34" using 1:2 title '80MB' with linespoints
+
+          set term png
+          set output "Rand_ReadPerf.png"
+          replot
+          set term x11
+
