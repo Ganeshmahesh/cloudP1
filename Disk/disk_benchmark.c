@@ -83,7 +83,7 @@ read_write_op(void * param)
   lseek(src_fp, start_address, SEEK_SET);
 
   int thread_block_complete = 0;   
-  while((start.tv_sec < end_time) && thread_block_complete == 0)
+  while(thread_block_complete == 0)
   {
     
     lseek(fp_start_addr,start_address , SEEK_SET);
@@ -136,7 +136,7 @@ seq_read_op(void* param)
   //inital seek of the src file pointer
    
   int thread_block_complete = 0;   
-  while((start.tv_sec < end_time) && thread_block_complete == 0)
+  while(thread_block_complete == 0)
   {
     
     lseek(fp_start_addr,start_address , SEEK_SET);
@@ -192,8 +192,8 @@ rand_read_op(void* param)
   fp_start_addr = thread_data[thread_id].thread_fp;
  // fp_end_addr = thread_data[thread_id].thread_fp + end_address;
   //inital seek of the src file pointer
-   
-  while(start.tv_sec < end_time)
+  int i = no_blocks;
+  while(i>0)
   {
     
     lseek(fp_start_addr,start_address , SEEK_SET);
@@ -209,6 +209,7 @@ rand_read_op(void* param)
     clock_gettime(CLOCK_REALTIME,&start);
     thread_total_op++; 
 //    printf("start_address %ld \n",start_address);
+	i--;
   }
 
   thread_op_array[thread_id] = thread_total_op; 
